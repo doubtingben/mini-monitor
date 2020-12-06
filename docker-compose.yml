@@ -1,0 +1,77 @@
+---
+version: '2'
+
+services:
+
+  grafana:
+    image: grafana/grafana
+    entrypoint:
+      - bash
+      - -c
+      - grafana-cli plugins install grafana-piechart-panel && /run.sh
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus_data:/prometheus
+    mem_limit: 2G
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  loki:
+    image: grafana/loki:master
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter
+    #network_mode : host
+    pid: "host"
+    command: --path.rootfs=/host
+    volumes:
+      - /:/host,ro,rslave
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  process_exporter:
+    image: ncabatoff/process-exporter
+    command: -config.path /config/process-exporter.yml -procfs /host/proc
+    privileged: true
+    volumes:
+      - ./process_exporter:/config
+      - /proc:/host/proc
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'        
+
+  external_exporter:
+    build: external_exporter
+    env_file: .env
+    command: $VALIDATOR_ADDRESS 60 $VALIDATOR_URL
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'        
