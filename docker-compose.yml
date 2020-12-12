@@ -15,6 +15,7 @@ services:
       - .env
     volumes:
       - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./grafana-data:/var/lib/grafana grafana/grafana
     logging:
       driver: loki
       options:
@@ -27,7 +28,19 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./prometheus_data:/prometheus
+      - ./prometheus/rules:/prometheus_rules
     mem_limit: 2G
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  alertmanager:
+    image: prom/alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./prometheus/alertmanager.yml:/etc/prometheus/alertmanager.yml:ro
     logging:
       driver: loki
       options:
@@ -37,11 +50,14 @@ services:
     image: grafana/loki:master
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./loki/loki.yml:/etc/loki/loki.yml
+      - ./loki_data:/loki_data
+    # logging:
+    #   driver: loki
+    #   options:
+    #     loki-url: 'http://localhost:3100/api/prom/push'
 
   node_exporter:
     image: quay.io/prometheus/node-exporter
@@ -75,3 +91,4 @@ services:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'        
+

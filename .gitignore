@@ -1,3 +1,4 @@
 .env
 prometheus_data
 external_exporter/venv
+loki_data/
