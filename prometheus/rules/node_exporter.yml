@@ -260,8 +260,8 @@ groups:
     rules:
     - alert: TargetDown
       annotations:
-        message: '{{ printf "%.4g" $value }}% of the {{ $labels.job }}/{{ $labels.service }} targets in {{ $labels.namespace }} namespace are down.'
-      expr: 100 * (count(up == 0) BY (job, namespace, service) / count(up) BY (job, namespace, service)) > 10
+        message: '{{ printf "%.4g" $value }}% of the {{ $labels.job }} targets on the {{ $labels.instance }} instance are down.'
+      expr: 100 * (count(up == 0) BY (job, instance) / count(up) BY (job, instance)) > 10
       for: 10m
       labels:
         severity: warning
@@ -285,4 +285,4 @@ groups:
         changes(node_network_up{job="node-exporter",device!~"veth.+"}[2m]) > 2
       for: 2m
       labels:
-        severity: warning      
+        severity: warning
