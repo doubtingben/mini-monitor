@@ -11,8 +11,8 @@ receivers:
   - name: 'default'
     pushover_configs:
       - send_resolved: true
-        user_key: ux637dzjj8br8k6peqej2sa8czptek
-        token: aevh4m4f8y91m1ud2zni4h85inzs4u
+        user_key: <I REMOVED THE APP>
+        token: <I REMOVED THE APP>
 inhibit_rules:
   - source_match:
       severity: 'critical'
