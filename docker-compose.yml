@@ -15,7 +15,7 @@ services:
       - .env
     volumes:
       - ./grafana/provisioning/:/etc/grafana/provisioning/
-      - ./grafana-data:/var/lib/grafana grafana/grafana
+      - ./grafana-data:/var/lib/grafana
     logging:
       driver: loki
       options:
@@ -25,6 +25,8 @@ services:
     image: prom/prometheus
     ports:
       - "9090:9090"
+    extra_hosts:
+      - "mini-monitor:192.168.86.209"
     command: |-
       --config.file=/etc/prometheus/prometheus.yml
       --storage.tsdb.path=/prometheus
@@ -65,18 +67,6 @@ services:
     #   driver: loki
     #   options:
     #     loki-url: 'http://localhost:3100/api/prom/push'
-
-  node_exporter:
-    image: quay.io/prometheus/node-exporter
-    #network_mode : host
-    pid: "host"
-    command: --path.rootfs=/host
-    volumes:
-      - /:/host,ro,rslave
-    logging:
-      driver: loki
-      options:
-        loki-url: 'http://localhost:3100/api/prom/push'
 
   process_exporter:
     image: ncabatoff/process-exporter
