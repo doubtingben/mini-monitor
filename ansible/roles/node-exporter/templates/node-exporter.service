@@ -1,0 +1,17 @@
+[Unit]
+Description=Prometheus Node Exporter
+After=network-online.target
+
+[Service]
+Type=simple
+User=node-exporter
+ExecStart=/usr/local/bin/node_exporter \
+    --no-collector.bonding \
+    --web.listen-address={{ node_exporter_web_listen_address }}
+
+Restart=always
+RestartSec=1
+StartLimitInterval=0
+NoNewPrivileges=yes
+[Install]
+WantedBy=multi-user.target

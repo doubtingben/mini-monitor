@@ -1,0 +1,53 @@
+- name: Install packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+
+- name: Add apt signing key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Docker gpg key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /usr/share/keyrings/docker-archive-keyring
+
+# - name: Dearmor gpg key
+#   ansible.builtin.shell: gpg --dearmor /usr/share/keyrings/docker-archive-keyring
+
+- name: Add apt repo
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu   focal stable
+    state: present
+    filename: docker
+
+- name: Update the `apt` package index
+  apt:
+    update_cache: yes
+    cache_valid_time: 43200 # 12 hours
+
+- name: Install Docker CE
+  package:
+    name: 
+      - docker-ce 
+      - docker-ce-cli 
+      - containerd.io
+    state: present
+
+- name: Install docker-copose
+  get_url:
+    url: https://github.com/docker/compose/releases/download/1.28.5/run.sh
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+
+- name: Start and enable the service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes

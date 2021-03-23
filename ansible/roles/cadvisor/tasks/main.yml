@@ -1,0 +1,20 @@
+- name: Make directory
+  ansible.builtin.file:
+    path: "{{ cadvisor_root }}"
+    state: directory
+
+- name: Write .env
+  copy:
+    content: |-
+      CADVISOR_PORT={{ cadvisor_port }}
+    dest: "{{ cadvisor_root }}/.env"
+    
+- name: Write compose
+  ansible.builtin.copy:
+    src: docker-compose.yml
+    dest: "{{ cadvisor_root }}/docker-compose.yml"
+
+- name: Start compose
+  ansible.builtin.shell: docker-compose up -d
+  args:
+    chdir: "{{ cadvisor_root }}"

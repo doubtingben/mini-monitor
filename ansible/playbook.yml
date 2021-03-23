@@ -1,0 +1,12 @@
+---
+- name: Update Lotus VMs
+  hosts: all
+  become: yes
+  vars:
+  roles:
+    - role: node-exporter
+      tags: node-exporter
+    - role: docker
+      tags: docker
+    - role: cadvisor
+      tags: cadvisor

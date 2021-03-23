@@ -1,0 +1,49 @@
+---
+- name: Create user
+  user:
+    name: node-exporter
+    state: present
+
+- name: Download node_exporter binary to local folder
+  become: false
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+    checksum: "sha256:{{ node_exporter_checksum }}"
+    mode: '0644'
+  check_mode: false
+
+- name: Unpack node_exporter binary
+  become: false
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ go_arch }}.tar.gz"
+    dest: "/tmp"
+    creates: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ go_arch }}/node_exporter"
+    remote_src: yes
+  check_mode: false
+
+- name: Propagate node_exporter binaries
+  copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-{{ go_arch }}/node_exporter"
+    dest: "/usr/local/bin/node_exporter"
+    mode: 0755
+    owner: root
+    group: root
+    remote_src: yes
+  notify: restart node-exporter
+
+- name: Template systemd unit
+  template:
+    src: node-exporter.service
+    dest: /etc/systemd/system/node-exporter.service
+  notify:
+    - reload systemd
+    - restart node-exporter
+
+- name: Enable and start the service
+  systemd:
+    name: node-exporter
+    enabled: yes
+    state: started
+  tags:
+    - node-exporter

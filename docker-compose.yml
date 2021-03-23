@@ -5,6 +5,7 @@ services:
 
   grafana:
     image: grafana/grafana
+    restart: always
     entrypoint:
       - bash
       - -c
@@ -23,6 +24,7 @@ services:
 
   prometheus:
     image: prom/prometheus
+    restart: always
     ports:
       - "9090:9090"
     extra_hosts:
@@ -45,6 +47,7 @@ services:
 
   alertmanager:
     image: prom/alertmanager
+    restart: always
     ports:
       - "9093:9093"
     command: --config.file=/etc/prometheus/alertmanager.yml
@@ -57,6 +60,7 @@ services:
 
   loki:
     image: grafana/loki:master
+    restart: always
     ports:
       - "3100:3100"
     command: -config.file=/etc/loki/loki.yml
@@ -70,6 +74,7 @@ services:
 
   process_exporter:
     image: ncabatoff/process-exporter
+    restart: always
     command: -config.path /config/process-exporter.yml -procfs /host/proc
     privileged: true
     volumes:
@@ -82,11 +87,38 @@ services:
 
   external_exporter:
     build: external_exporter
+    restart: always
     env_file: .env
     command: $VALIDATOR_ADDRESS 60 $VALIDATOR_URL
-    restart: always
     logging:
       driver: loki
       options:
         loki-url: 'http://localhost:3100/api/prom/push'        
 
+  spectroscope:
+    build: spectroscope
+    env_file: .env
+    #command: spectroscope run -c /config/config.toml
+    command: --config /config/config.toml
+    restart: always
+    volumes:
+      - ./spectroscope/config:/config
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.38.8
+    restart: always
+    privileged: true
+    ports:
+      - "$CADVISOR_PORT:8080"
+    devices:
+      - "/dev/kmsg:/dev/kmsg"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
