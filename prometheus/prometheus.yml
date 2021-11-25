@@ -3,20 +3,20 @@ global:
   scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
   evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
   # scrape_timeout is set to the global default (10s).
-  
+
 # Alertmanager configuration
 alerting:
   alertmanagers:
   - static_configs:
     - targets:
        - 'alertmanager:9093'
-  
+
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
   - '/prometheus_rules/*yml'
   # - "first_rules.yml"
   # - "second_rules.yml"
-  
+
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.
 scrape_configs:
@@ -28,7 +28,7 @@ scrape_configs:
       - targets: ['loki:3100']
   - job_name: node_exporter
     static_configs:
-      - targets: 
+      - targets:
           - mini-monitor:9100
           - super-mini:9100
           - i7-4770k:9100
@@ -44,36 +44,62 @@ scrape_configs:
           - ryzen7-3700x:8080
   - job_name: process_exporter
     static_configs:
-      - targets: 
+      - targets:
           - process_exporter:9256
   - job_name: external_exporter
     static_configs:
-      - targets: 
+      - targets:
           - external_exporter:9010
   - job_name: geth_metrics_expars
     metrics_path: /debug/metrics/prometheus
     static_configs:
-      - targets: 
+      - targets:
           - ryzen3600-a:9091
           - ryzen7-3700x:9091
   - job_name: geth_exporter
     static_configs:
-      - targets: 
+      - targets:
           - ryzen3600-a:9092
           - ryzen7-3700x:9092
   - job_name: lighthouse_beacon_node
     static_configs:
-      - targets: 
+      - targets:
           - super-mini:5054
           - ryzen3600-a:5054
           - ryzen7-3700x:5054
   - job_name: lighthouse_validator_client
     static_configs:
-      - targets: 
+      - targets:
           - super-mini:5064
-          - ryzen3600-a:5064
-          - ryzen7-3700x:9092
+         # - ryzen3600-a:5064
+          - ryzen7-3700x:5064
   - job_name: zcashd_exporter
     static_configs:
       - targets:
           - super-mini:9101
+  - job_name: json_exporter_coingeko
+    scrape_interval: 1m
+    metrics_path: /probe
+    static_configs:
+    - targets:
+      - https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: json_exporter:7979
+  - job_name: json_exporter_etherscanHeight
+    scrape_interval: 1m
+    metrics_path: /probe
+    static_configs:
+    - targets:
+      - https://api.etherscan.io/api?module=proxy&action=eth_blockNumber
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: json_exporter:7979

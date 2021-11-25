@@ -32,6 +32,7 @@ services:
     command: |-
       --config.file=/etc/prometheus/prometheus.yml
       --storage.tsdb.path=/prometheus
+      --storage.tsdb.retention.time=90d
       --web.console.libraries=/usr/share/prometheus/console_libraries
       --web.console.templates=/usr/share/prometheus/consoles
       --web.enable-admin-api
@@ -66,7 +67,7 @@ services:
     command: -config.file=/etc/loki/loki.yml
     volumes:
       - ./loki/loki.yml:/etc/loki/loki.yml
-      - ./loki_data:/loki_data
+      - ./loki_data_11-2021:/loki_data
     # logging:
     #   driver: loki
     #   options:
@@ -83,7 +84,7 @@ services:
     logging:
       driver: loki
       options:
-        loki-url: 'http://localhost:3100/api/prom/push'        
+        loki-url: 'http://localhost:3100/api/prom/push'
 
   external_exporter:
     build: external_exporter
@@ -93,20 +94,20 @@ services:
     logging:
       driver: loki
       options:
-        loki-url: 'http://localhost:3100/api/prom/push'        
-
-  spectroscope:
-    build: spectroscope
-    env_file: .env
-    #command: spectroscope run -c /config/config.toml
-    command: --config /config/config.toml
-    restart: always
-    volumes:
-      - ./spectroscope/config:/config
-    logging:
-      driver: loki
-      options:
         loki-url: 'http://localhost:3100/api/prom/push'
+
+  # spectroscope:
+  #   build: spectroscope
+  #   env_file: .env
+  #   #command: spectroscope run -c /config/config.toml
+  #   command: --config /config/config.toml
+  #   restart: always
+  #   volumes:
+  #     - ./spectroscope/config:/config
+  #   logging:
+  #     driver: loki
+  #     options:
+  #       loki-url: 'http://localhost:3100/api/prom/push'
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.38.8
@@ -122,3 +123,17 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
+
+  json_exporter:
+    #image: quay.io/prometheuscommunity/json-exporter
+    image: doubtingben/json_exporter@sha256:edea98337045e7835c91b98e2d40875ba89a3a6c165be391cf91fb5ea7edde15
+    restart: always
+    ports:
+      - "7979:7979"
+    command: --config.file=/json_exporter/config.yaml
+    volumes:
+      - ./json_exporter/:/json_exporter/:ro
+    logging:
+      driver: loki
+      options:
+        loki-url: 'http://localhost:3100/api/prom/push'
